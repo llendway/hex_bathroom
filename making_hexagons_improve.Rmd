@@ -23,10 +23,10 @@ n_across <- shower_width
 
 n_down <- ceiling(shower_length/(3/sqrt(3)))
 
-inset_left <- 3
-inset_right <- 2
-inset_top <- 2
-inset_bottom <- 3
+inset_left <- 5
+inset_right <- 4
+inset_top <- 6
+inset_bottom <- 5
 
 across_xs <- rep(c(0,0, .5, 1, 1, .5, 0), n_across) +
     rep(0:(n_across-1), each = 7)
@@ -37,30 +37,64 @@ across_ys <- rep(c(0, 1/sqrt(3), 3/(2*sqrt(3)), 1/sqrt(3), 0,-1/(2*sqrt(3)), 0),
 Color locations
 
 ```{r}
-#light_green <- c()
 light_green <- c(
   # vertical diamonds
+  # left column, middle
   seq((inset_bottom + 1)*n_across + inset_left + 2, 
       2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
       2*n_across),
+  # left column, left side
+  seq((inset_bottom + 2)*n_across + inset_left + 1, 
+      2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 1, 
+      4*n_across),
+  # left column, right side
+  seq((inset_bottom + 2)*n_across + inset_left + 2, 
+      2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
+      4*n_across),
+  # right column, middle
   seq((inset_bottom + 2)*n_across - inset_right - 1, 
       2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1, 
-      2*n_across) 
-#   seq(2551, 4901, n_down) + 2,
-#   seq(103, 2403, n_down*2),
-#   seq(103, 2403, n_down*2) + 1,
-#   seq(2599, 4949, n_down) - 2,
-#   seq(103, 2403, n_down*2) + 44,
-#   seq(103, 2403, n_down*2) + 45,
-#   seq(103, 103 + n_across - 6, 3),
-#   seq(104, 103 + n_across - 5, 3),
-#   seq(2551 + 5, 2551 + n_across - 5, 3),
-#   seq(2551 + 5 + n_across, 2551 + n_across - 5 + n_across, 3),
-#   seq(2403, 2403 + n_across - 6, 3),
-#   seq(2404, 2403 + n_across - 5, 3),
-#   seq(4851 + 5, 4851 + n_across - 5, 3),
-#   seq(4851 + 5 + n_across, 4851 + n_across - 5 + n_across, 3),
-#   # stars
+      2*n_across),
+  # right column, right side
+  seq((inset_bottom + 3)*n_across - inset_right - 1, 
+      2*n_across*n_down - (inset_top)*n_across - inset_right - 1, 
+      4*n_across),
+  # right column, left side
+  seq((inset_bottom + 3)*n_across - inset_right - 2, 
+      2*n_across*n_down - (inset_top)*n_across - inset_right - 2, 
+      4*n_across),
+  # bottom row, bottom
+  seq((inset_bottom + 1)*n_across + inset_left + 2,
+      (inset_bottom + 2)*n_across - inset_right - 1,
+      3),
+  # bottom row, top
+  seq((inset_bottom + 3)*n_across + inset_left + 2,
+      (inset_bottom + 4)*n_across - inset_right - 1,
+      3),
+  # bottom row, middle
+  seq((inset_bottom + 2)*n_across + inset_left + 1,
+      (inset_bottom + 3)*n_across - inset_right - 2,
+      3),
+  seq((inset_bottom + 2)*n_across + inset_left + 2,
+      (inset_bottom + 3)*n_across - inset_right - 1,
+      3),
+  # top row, top
+  seq(2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2,
+      2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1,
+      3),
+  # top row, bottom
+  seq(2*n_across*n_down - (inset_top + 4)*n_across + inset_left + 2,
+      2*n_across*n_down - (inset_top + 3)*n_across - inset_right -1,
+      3),
+  # top row, middle
+  seq(2*n_across*n_down - (inset_top + 3)*n_across + inset_left + 1,
+      2*n_across*n_down - (inset_top + 2)*n_across - inset_right - 2,
+      3),
+  seq(2*n_across*n_down - (inset_top + 3)*n_across + inset_left + 2,
+      2*n_across*n_down - (inset_top + 2)*n_across - inset_right - 1,
+      3)
+  
+   # stars
 #   c(
 #       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
 #       seq(362, by = 50, length.out = 2), 
@@ -152,15 +186,139 @@ hexagon <- tibble(
 
 ```
 
+Write  a function
+
+```{r}
+make_floor_hex <- function(dim_width, dim_length, inset_left, inset_right, inset_top, inset_bottom){
+  n_across <- dim_width
+  n_down <- ceiling(dim_length/(3/sqrt(3)))
+  
+  across_xs <- rep(c(0,0, .5, 1, 1, .5, 0), n_across) +
+    rep(0:(n_across-1), each = 7)
+  
+  across_ys <- rep(c(0, 1/sqrt(3), 3/(2*sqrt(3)), 1/sqrt(3), 0,-1/(2*sqrt(3)), 0), n_across)
+  light_green <- c(
+    # vertical diamonds
+    # left column, middle
+    seq((inset_bottom + 1)*n_across + inset_left + 2, 
+        2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
+        2*n_across),
+    # left column, left side
+    seq((inset_bottom + 2)*n_across + inset_left + 1, 
+        2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 1, 
+        4*n_across),
+    # left column, right side
+    seq((inset_bottom + 2)*n_across + inset_left + 2, 
+        2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
+        4*n_across),
+    # right column, middle
+    seq((inset_bottom + 2)*n_across - inset_right - 1, 
+        2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1, 
+        2*n_across),
+    # right column, right side
+    seq((inset_bottom + 3)*n_across - inset_right - 1, 
+        2*n_across*n_down - (inset_top)*n_across - inset_right - 1, 
+        4*n_across),
+    # right column, left side
+    seq((inset_bottom + 3)*n_across - inset_right - 2, 
+        2*n_across*n_down - (inset_top)*n_across - inset_right - 2, 
+        4*n_across),
+    # bottom row, bottom
+    seq((inset_bottom + 1)*n_across + inset_left + 2,
+        (inset_bottom + 2)*n_across - inset_right - 1,
+        3),
+    # bottom row, top
+    seq((inset_bottom + 3)*n_across + inset_left + 2,
+        (inset_bottom + 4)*n_across - inset_right - 1,
+        3),
+    # bottom row, middle
+    seq((inset_bottom + 2)*n_across + inset_left + 1,
+        (inset_bottom + 3)*n_across - inset_right - 2,
+        3),
+    seq((inset_bottom + 2)*n_across + inset_left + 2,
+        (inset_bottom + 3)*n_across - inset_right - 1,
+        3),
+    # top row, top
+    seq(2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2,
+        2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1,
+        3),
+    # top row, bottom
+    seq(2*n_across*n_down - (inset_top + 4)*n_across + inset_left + 2,
+        2*n_across*n_down - (inset_top + 3)*n_across - inset_right -1,
+        3),
+    # top row, middle
+    seq(2*n_across*n_down - (inset_top + 3)*n_across + inset_left + 1,
+        2*n_across*n_down - (inset_top + 2)*n_across - inset_right - 2,
+        3),
+    seq(2*n_across*n_down - (inset_top + 3)*n_across + inset_left + 2,
+        2*n_across*n_down - (inset_top + 2)*n_across - inset_right - 1,
+        3)
+  )
+  
+  dark_green <- c(
+    # outer every other dot
+    seq((inset_bottom-1)*n_across + inset_left, 
+        inset_bottom*n_across - inset_right + 1, 2),
+    seq(2*n_across*n_down - inset_top*n_across + inset_left, 
+        2*n_across*n_down - (inset_top - 1)*n_across - inset_right + 1, 
+        2),
+    seq((inset_bottom-1)*n_across + inset_left, 
+        2*n_across*n_down - inset_top*n_across + inset_left, 
+        2*n_across),
+    seq(inset_bottom*n_across - inset_right + 1, 
+        2*n_across*n_down - (inset_top - 1)*n_across - inset_right + 1, 
+        2*n_across),
+    # inner every other dot
+    seq((inset_bottom + 5)*n_across + inset_left + 4, 
+        (inset_bottom + 6)*n_across - inset_right - 3, 2),
+    seq(2*n_across*n_down - (inset_top + 6)*n_across + inset_left + 4, 
+        2*n_across*n_down - (inset_top + 5)*n_across - inset_right -3, 
+        2),
+    seq((inset_bottom + 5)*n_across + inset_left + 4, 
+        2*n_across*n_down - (inset_top + 6)*n_across + inset_left + 4, 
+        2*n_across),
+    seq((inset_bottom + 6)*n_across - inset_right - 3, 
+        2*n_across*n_down - (inset_top + 5)*n_across - inset_right -3, 
+        2*n_across) 
+  )
+  
+  hexagon <- tibble(
+    x = rep(c(across_xs, across_xs + sqrt(3)/4), n_down),
+    y = rep(c(across_ys, across_ys + 3/(2*sqrt(3))), n_down) + 
+      rep((0:(n_down - 1))*(3/sqrt(3)), each = 2*7*n_across),
+    group = rep(1:(2*n_across*n_down), each = 7),
+    colors = if_else(group %in% light_green,
+                     "#8aa48f",
+                     if_else(group %in% dark_green,
+                             "#365447",
+                             "white"))
+  )
+  hexagon
+}
+```
+
+Shower floor plan
+
+```{r}
+shower <- make_floor_hex(
+  dim_width = 36, 
+  dim_length = 72, 
+  inset_left = 5, 
+  inset_right = 4, 
+  inset_top = 6, 
+  inset_bottom = 5)
+```
+
+
 
 ```{r, fig.width=10, fig.height=10}
-hexagon %>% 
+shower %>% 
   ggplot(aes(x = x,
              y = y, 
              group = group)) +
   geom_polygon(color = "black",
                aes(fill = colors)) +
- scale_fill_identity() +
+  scale_fill_identity() +
   # geom_text(data = . %>%
   #             group_by(group) %>%
   #             summarize(mid_x = mean(x),
@@ -171,6 +329,71 @@ hexagon %>%
   coord_equal() +
   theme_void()
 ```
+
+
+The rest of the bathroom
+
+```{r}
+bathroom <- make_floor_hex(
+  dim_width = 111, 
+  dim_length = 77.875, 
+  inset_left = 5, 
+  inset_right = 19, 
+  inset_top = 6, 
+  inset_bottom = 35)
+```
+
+Plot
+
+```{r, fig.width=10, fig.height=10}
+bathroom %>% 
+  ggplot(aes(x = x,
+             y = y)) +
+  geom_polygon(color = "black",
+               aes(group = group,
+                   fill = colors)) +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61),
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               fill = "white") +
+  scale_fill_identity() +
+  # geom_text(data = . %>%
+  #             group_by(group) %>%
+  #             summarize(mid_x = mean(x),
+  #                       mid_y = mean(y)),
+  #           aes(x = mid_x,
+  #               y = mid_y,
+  #               label = group)) +
+  coord_equal() +
+  theme_void()
+```
+
+
+Now figure out how to put them together ...
+
+```{r, fig.width=10, fig.height=10}
+bathroom %>% 
+ mutate(x = x + 36) %>% 
+  ggplot(aes(x = x,
+             y = y)) +
+  geom_polygon(color = "black",
+               aes(group = group,
+                   fill = colors)) +
+  geom_polygon(data = shower,
+               color = "black",
+               aes(fill = colors, 
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61) + 36,
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               fill = "white") +
+  scale_fill_identity() +
+  coord_equal() +
+  theme_void()
+```
+
+
+
+
+
 
 
 ```{r, fig.width=10, fig.height=10}
