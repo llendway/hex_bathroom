@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
+Parameters
 
 ```{r}
 shower_width <- 36
@@ -22,114 +23,120 @@ n_across <- shower_width
 
 n_down <- ceiling(shower_length/(3/sqrt(3)))
 
-inset <- 5
+inset_left <- 3
+inset_right <- 2
+inset_top <- 2
+inset_bottom <- 3
 
 across_xs <- rep(c(0,0, .5, 1, 1, .5, 0), n_across) +
     rep(0:(n_across-1), each = 7)
 
 across_ys <- rep(c(0, 1/sqrt(3), 3/(2*sqrt(3)), 1/sqrt(3), 0,-1/(2*sqrt(3)), 0), n_across)
+```
 
-light_green <- c()
+Color locations
+
+```{r}
+#light_green <- c()
 light_green <- c(
   # vertical diamonds
-  seq(2551, 4901, n_down) + 2,
-  seq(103, 2403, n_down*2),
-  seq(103, 2403, n_down*2) + 1,
-  seq(2599, 4949, n_down) - 2,
-  seq(103, 2403, n_down*2) + 44,
-  seq(103, 2403, n_down*2) + 45,
-  seq(103, 103 + n_across - 6, 3),
-  seq(104, 103 + n_across - 5, 3),
-  seq(2551 + 5, 2551 + n_across - 5, 3),
-  seq(2551 + 5 + n_across, 2551 + n_across - 5 + n_across, 3),
-  seq(2403, 2403 + n_across - 6, 3),
-  seq(2404, 2403 + n_across - 5, 3),
-  seq(4851 + 5, 4851 + n_across - 5, 3),
-  seq(4851 + 5 + n_across, 4851 + n_across - 5 + n_across, 3),
-  # stars
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 103,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 103 + 500,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 103 + 1000,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 103 + 1500,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 123,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 123 + 500,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 123 + 1000,
-  c(
-      c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
-      seq(362, by = 50, length.out = 2), 
-      seq(362, by = 50, length.out = 2) + 1,
-      c(2860,2861, 2863, 2864)
-    ) + 123 + 1500
+  seq((inset_bottom + 1)*n_across + inset_left + 2, 
+      2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
+      2*n_across),
+  seq((inset_bottom + 2)*n_across - inset_right - 1, 
+      2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1, 
+      2*n_across) 
+#   seq(2551, 4901, n_down) + 2,
+#   seq(103, 2403, n_down*2),
+#   seq(103, 2403, n_down*2) + 1,
+#   seq(2599, 4949, n_down) - 2,
+#   seq(103, 2403, n_down*2) + 44,
+#   seq(103, 2403, n_down*2) + 45,
+#   seq(103, 103 + n_across - 6, 3),
+#   seq(104, 103 + n_across - 5, 3),
+#   seq(2551 + 5, 2551 + n_across - 5, 3),
+#   seq(2551 + 5 + n_across, 2551 + n_across - 5 + n_across, 3),
+#   seq(2403, 2403 + n_across - 6, 3),
+#   seq(2404, 2403 + n_across - 5, 3),
+#   seq(4851 + 5, 4851 + n_across - 5, 3),
+#   seq(4851 + 5 + n_across, 4851 + n_across - 5 + n_across, 3),
+#   # stars
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 103,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 103 + 500,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 103 + 1000,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 103 + 1500,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 123,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 123 + 500,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 123 + 1000,
+#   c(
+#       c(2762, 2762 + n_across, 2762 + 3*n_across, 2762 + 4*n_across),
+#       seq(362, by = 50, length.out = 2), 
+#       seq(362, by = 50, length.out = 2) + 1,
+#       c(2860,2861, 2863, 2864)
+#     ) + 123 + 1500
 )
 
 dark_green <- c(
   # outer every other dot
-  seq(inset*n_across + inset, (inset + 1)*n_across - inset, 2),
-  seq(2*n_across*n_down - inset*n_across + inset, 
-      2*n_across*n_down - (inset - 1)*n_across - inset, 
+  seq((inset_bottom-1)*n_across + inset_left, 
+      inset_bottom*n_across - inset_right + 1, 2),
+  seq(2*n_across*n_down - inset_top*n_across + inset_left, 
+      2*n_across*n_down - (inset_top - 1)*n_across - inset_right + 1, 
       2),
-  seq(inset*n_across + inset, 
-      2*n_across*n_down - inset*n_across + inset, 
+  seq((inset_bottom-1)*n_across + inset_left, 
+      2*n_across*n_down - inset_top*n_across + inset_left, 
       2*n_across),
-  seq((inset + 1)*n_across - inset, 
-      2*n_across*n_down - (inset - 1)*n_across - inset, 
-      2*n_across)
+  seq(inset_bottom*n_across - inset_right + 1, 
+      2*n_across*n_down - (inset_top - 1)*n_across - inset_right + 1, 
+      2*n_across),
   # inner every other dot
-  # seq(2651, 4801, n_down) + 4,
-  # seq(2699, 4849, n_down) - 4,
-  # seq(2655, 2695, 2),
-  # seq(4805, 4845, 2),
-  # stars
-  # seq(2862 + 2*n_across + 3, by = 500, length.out = 4),
-  # seq(2862 + 2*n_across + 23, by = 500, length.out = 4)
+  seq((inset_bottom + 5)*n_across + inset_left + 4, 
+      (inset_bottom + 6)*n_across - inset_right - 3, 2),
+  seq(2*n_across*n_down - (inset_top + 6)*n_across + inset_left + 4, 
+      2*n_across*n_down - (inset_top + 5)*n_across - inset_right -3, 
+      2),
+  seq((inset_bottom + 5)*n_across + inset_left + 4, 
+      2*n_across*n_down - (inset_top + 6)*n_across + inset_left + 4, 
+      2*n_across),
+  seq((inset_bottom + 6)*n_across - inset_right - 3, 
+      2*n_across*n_down - (inset_top + 5)*n_across - inset_right -3, 
+      2*n_across) 
 )
-
-# hexagon = tibble(
-#   x = rep(across_xs, n_down),
-#   y = rep(across_ys, n_down) + 
-#     rep((0:(n_down - 1))*(3/sqrt(3)), each = 7*n_across),
-#   group = rep(1:(n_across*n_down), each = 7),
-#   colors = if_else(group %in% light_green,
-#                    "#8aa48f",
-#                    if_else(group %in% dark_green,
-#                           "#365447",
-#                           "white"))
-# )
 
 hexagon <- tibble(
   x = rep(c(across_xs, across_xs + sqrt(3)/4), n_down),
@@ -143,18 +150,6 @@ hexagon <- tibble(
                           "white"))
 )
 
-# hexagon2 <-
-#   hexagon %>% 
-#   mutate(x = x + sqrt(3)/4,
-#          y = y + 3/(2*sqrt(3)),
-#          group = group + max(group)#,
-  # colors = if_else(group %in% light_green,
-  #                  "#8aa48f",
-  #                  if_else(group %in% dark_green,
-  #                         "#365447",
-  #                         "white"))
-# )
-
 ```
 
 
@@ -165,9 +160,6 @@ hexagon %>%
              group = group)) +
   geom_polygon(color = "black",
                aes(fill = colors)) +
-  # geom_polygon(data = hexagon2,
-  #              color = "black",
-  #              fill = "white") +
  scale_fill_identity() +
   # geom_text(data = . %>%
   #             group_by(group) %>%
