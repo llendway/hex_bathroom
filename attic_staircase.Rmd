@@ -1,0 +1,92 @@
+---
+title: "attic stairs"
+output: html_document
+date: '2022-12-26'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+
+14 stairs (108/7.75)
+* floor to floor (currently about 106" but we'll say 108")  
+* floor to ceiling at west wall 118"  
+* floor to ceiling 35" from west wall 148"
+* wall to edge of top step - 100"  
+
+
+```{r, fig.height=8, fig.width=5}
+ggplot() +
+  geom_vline(aes(xintercept = 0)) +
+  geom_segment(aes(x = 100, xend = 100,
+                   y = 0, yend = 118)) +
+  # geom_point(aes(x = rep(100, 60),
+  #                y = seq(0, 118, 2))) +
+  geom_hline(aes(yintercept = c(0, 108)),
+             color = "gray") +
+  # geom_point(aes(x = c(100, 65, 30, -5),
+  #                y = c(118, 148, 178, 208))) +
+  geom_segment(aes(x = 100, xend = -5, y = 118, yend = 208)) +
+  geom_segment(aes(x = seq(-1, 49, 10), xend = seq(10, 60, 10), 
+                   y = seq(108/14, 6*108/14, 108/14), 
+                   yend = seq(108/14, 6*108/14, 108/14)),
+               color = "darkred") +
+  geom_segment(aes(x = seq(0, 50, 10), xend = seq(11, 61, 10),
+                   y = seq(108, 108-5*108/14, -108/14),
+                   yend = seq(108, 108-5*108/14, -108/14)),
+               color = "darkred") +
+  geom_segment(aes(x = c(59, 60), xend = c(100, 100), 
+                   y = c(7*108/14, 8*108/14), 
+                   yend = c(7*108/14, 8*108/14)),
+               color = "darkred") +
+  scale_y_continuous(breaks = seq(0,200, 6)) +
+  coord_equal() +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+```
+
+
+```{r, fig.height=8, fig.width=5}
+ggplot() +
+  geom_vline(aes(xintercept = c(0, 60))) +
+  geom_segment(aes(x = 100, xend = 100,
+                   y = 0, yend = 118)) +
+  # geom_point(aes(x = rep(100, 60),
+  #                y = seq(0, 118, 2))) +
+  geom_hline(aes(yintercept = 7*108/14 + 6*12+8)) +
+  geom_hline(aes(yintercept = c(0, 108)),
+             color = "gray") +
+  geom_point(aes(x = c(0,11, 70),
+                 y = c(108 + 6*12 + 8, 108-108/14 + 6*12 + 8, 7*108/14 + 6*12 + 8))) +
+  geom_segment(aes(x = 0, xend = 70, y = 108 + 6*12 + 8, yend = 7*108/14 + 6*12 + 8),
+               color = "turquoise") +
+  # geom_point(aes(x = c(100, 65, 30, -5),
+  #                y = c(118, 148, 178, 208))) +
+  geom_segment(aes(x = 100, xend = -5, y = 118, yend = 208)) +
+  geom_segment(aes(x = seq(-1, 39, 10), xend = seq(10, 50, 10), 
+                   y = seq(108/14, 5*108/14, 108/14), 
+                   yend = seq(108/14, 5*108/14, 108/14)),
+               color = "darkred") +
+  geom_segment(aes(x = seq(0, 50, 10), xend = seq(11, 61, 10),
+                   y = seq(108-108/14, 108-6*108/14, -108/14),
+                   yend = seq(108-108/14, 108-6*108/14, -108/14)),
+               color = "darkred") +
+  geom_segment(aes(x = c(59, 60), xend = c(100, 100), 
+                   y = c(6*108/14, 7*108/14), 
+                   yend = c(6*108/14, 7*108/14)),
+               color = "darkred") +
+  scale_y_continuous(breaks = seq(0,200, 6)) +
+  coord_equal() +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+```

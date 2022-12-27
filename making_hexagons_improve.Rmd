@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(ggforce)
 ```
 
 Parameters
@@ -309,8 +310,6 @@ shower <- make_floor_hex(
   inset_bottom = 5)
 ```
 
-
-
 ```{r, fig.width=10, fig.height=10}
 shower %>% 
   ggplot(aes(x = x,
@@ -337,25 +336,365 @@ The rest of the bathroom
 bathroom <- make_floor_hex(
   dim_width = 111, 
   dim_length = 77.875, 
-  inset_left = 5, 
-  inset_right = 19, 
-  inset_top = 6, 
-  inset_bottom = 35)
+  inset_left = 6, 
+  inset_right = 18, 
+  inset_top = 4, 
+  inset_bottom = 5)
 ```
 
-Plot
+Weird corner
+
+```{r}
+corner <- make_floor_hex(
+  dim_width = 41,
+  dim_length = 34,
+  inset_left = 1,
+  inset_right = 1,
+  inset_top = 2,
+  inset_bottom = 5
+)
+```
+
+
+Now figure out how to put them together ... got it! Not perfect but good enough. Clean up the corner stuff manually later.
 
 ```{r, fig.width=10, fig.height=10}
+floor_distance <- 36 # should make this a parameter ... but too lazy right now
+
 bathroom %>% 
-  ggplot(aes(x = x,
-             y = y)) +
+ mutate(x = x + floor_distance) %>% 
+  ggplot() +
   geom_polygon(color = "black",
-               aes(group = group,
+               aes(x = x,
+                   y = y, 
+                   group = group,
                    fill = colors)) +
-  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61),
+  geom_polygon(data = shower,
+               color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = corner %>% mutate(x = x + floor_distance + 53),
+               color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 mutate(x = x + floor_distance + 53)  %>% 
+                 filter(group %in% c(247, 329, 292:296, 252:255, 334:337, 171, 417,
+                                     1267:1271, 1309, 1310)),
+               fill = "white",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 mutate(x = x + floor_distance + 53)  %>% 
+                 filter(group %in% c(251, 333, 1351)),
+               fill = "#365447",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 mutate(x = x + floor_distance + 53)  %>% 
+                 filter(group %in% c(1597, 1637, 1638)),
+               fill = "#8aa48f",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61) +
+                               floor_distance,
                              y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               aes(x = x,
+                   y = y),
                fill = "white") +
+  # geom_polygon(data = tibble(x = c(31, 31, 61, 61, 31) + floor_distance,
+  #                            y = c(-.5, 21, 21, -.5, -.5)),
+  #              aes(x = x,
+  #                  y = y),
+  #              fill = "#8aa48f") +
+  geom_polygon(data = tibble(x = c(99, 99, 111.5, 111.5, 99) + floor_distance,
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "#8aa48f") +
+  geom_segment(data = tibble(x = 36, y = 0, xend = 36, yend = 72.5),
+               aes(x = x, y = y, xend = xend, yend = yend),
+               size = 2) +
+  # geom_ellipse(data = tibble(x0 = 15.5 + floor_distance,
+  #                  y0 = 11.5,
+  #                  a = 8.25, b = 11.5, angle = 0),
+  #              aes(x0 = x0, y0 = y0, a = a, b = b, angle = angle),
+  #              fill = "white",
+  #              color = "black",
+  #              size = 2) +
   scale_fill_identity() +
+  coord_equal() +
+  theme_void()
+```
+
+Trying patterns on big floor plan
+
+```{r, fig.width=10, fig.height=10}
+floor_distance <- 36 # should make this a parameter ... but too lazy right now
+
+lg_base <- c(
+        #1486, 1487, 1451, 1523,
+        1488,
+        1494, 1495, 1459, 1531,
+        #1502, 1503,1467, 1539,
+        1501,
+        1099, 1170, 1172, 
+        1818, 1820, 1891,
+        1526, 1599, 1672, 1745,
+        1454, 1383, 1312, 1241,
+        1749, 1678, 1607, 1536,
+        1245, 1318, 1391, 1464,
+        955, 990, 991, 1027,
+        1963, 1998, 1999, 2035) 
+
+lg_up <- lg_base + 14*36
+
+lg_down <- lg_base - 14*36
+
+dg_base <- c(
+        1488,1487, 1452, 1524,
+        1494, 1495, 1459, 1531,
+        #1502, 1503,1467, 1539,
+        1501, 1502, 1466, 1538,
+        955, 990, 991, 1027,
+        1963, 1998, 1999, 2035
+)
+
+dg_up <- dg_base + 14*36
+
+dg_down <- dg_base - 14*36
+
+
+bathroom %>% 
+ mutate(x = x + floor_distance) %>% 
+  ggplot() +
+  geom_polygon(color = "black",
+               aes(x = x,
+                   y = y, 
+                   group = group,
+                   fill = colors)) +
+  geom_polygon(data = shower,
+               color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = shower %>% 
+                 filter(group %in% lg_up),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = "black") +
+  geom_polygon(data = shower %>% 
+                 filter(group %in% lg_down),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = "black") +
+  geom_polygon(data = shower %>% 
+                 filter(group %in% dg_up),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = "black") +
+  geom_polygon(data = shower %>% 
+                 filter(group %in% dg_down),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = "black") +
+  geom_polygon(data = corner %>% mutate(x = x + floor_distance + 53),
+               color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 mutate(x = x + floor_distance + 53)  %>% 
+                 filter(group %in% c(247, 329, 292:296, 252:255, 334:337, 171, 417,
+                                     1267:1271, 1309, 1310)),
+               fill = "white",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 mutate(x = x + floor_distance + 53)  %>% 
+                 filter(group %in% c(251, 333, 1351)),
+               fill = "#365447",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 mutate(x = x + floor_distance + 53)  %>% 
+                 filter(group %in% c(1597, 1637, 1638)),
+               fill = "#8aa48f",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61) +
+                               floor_distance,
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  # geom_polygon(data = tibble(x = c(31, 31, 61, 61, 31) + floor_distance,
+  #                            y = c(-.5, 21, 21, -.5, -.5)),
+  #              aes(x = x,
+  #                  y = y),
+  #              fill = "#8aa48f") +
+  geom_polygon(data = tibble(x = c(99, 99, 111.5, 111.5, 99) + floor_distance,
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "#8aa48f") +
+  geom_segment(data = tibble(x = 36, y = 0, xend = 36, yend = 72.5),
+               aes(x = x, y = y, xend = xend, yend = yend),
+               size = 2) +
+  # geom_ellipse(data = tibble(x0 = 15.5 + floor_distance,
+  #                  y0 = 11.5,
+  #                  a = 8.25, b = 11.5, angle = 0),
+  #              aes(x0 = x0, y0 = y0, a = a, b = b, angle = angle),
+  #              fill = "white",
+  #              color = "black",
+  #              size = 2) +
+  scale_fill_identity() +
+  coord_equal() +
+  theme_void()
+```
+
+
+Trying patterns in their small spaces and experimenting.
+
+```{r, fig.width=5, fig.height=10}
+shower %>% 
+  ggplot() +
+  geom_polygon(color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = . %>% 
+                 filter(group %in% c(1486, 1487, 1489, 1492,
+                                     1451, 1523,
+                                     1494, 1495, 1459, 1531,
+                                     1497, 1500, 1502, 1503, 
+                                     1467, 1539,
+                                     1099, 1170, 1172, 1134, 1135,
+                                     1818, 1820, 1854, 1855, 1891,
+                                     1529, 1565, 1602, 1638, 1675,
+                                     1639, 1604, 1568, 1533,
+                                     1457, 1421, 1386, 1350, 1315,
+                                     1351, 1388, 1424, 1461,
+                                     1526, 1562, 1599, 1635, 1672, 1708, 1745, 1781,
+                                     1454, 1418, 1383, 1347, 1312, 1276, 1241, 1205,
+                                     1784, 1749, 1713, 1678, 1642, 1607, 1571, 1536,
+                                     1281, 1245, 1208, 1318, 1354, 1391, 1427, 1464)),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = "black") +
+  geom_text(data = . %>%
+              group_by(group) %>%
+              summarize(mid_x = mean(x),
+                        mid_y = mean(y)),
+            aes(x = mid_x,
+                y = mid_y,
+                label = group)) +
+  scale_fill_identity() +
+  coord_equal() +
+  theme_void()
+```
+
+
+Favorite shower pattern so far:
+
+```{r, fig.width=5, fig.height=10}
+lg_base <- c(
+        #1486, 1487, 1451, 1523,
+        1488,
+        1494, 1495, 1459, 1531,
+        #1502, 1503,1467, 1539,
+        1501,
+        1099, 1170, 1172, 
+        1818, 1820, 1891,
+        1526, 1599, 1672, 1745,
+        1454, 1383, 1312, 1241,
+        1749, 1678, 1607, 1536,
+        1245, 1318, 1391, 1464,
+        955, 990, 991, 1027,
+        1963, 1998, 1999, 2035) 
+
+lg_up <- lg_base + 14*36
+
+lg_down <- lg_base - 14*36
+
+dg_base <- c(
+        1488,1487, 1452, 1524,
+        1494, 1495, 1459, 1531,
+        #1502, 1503,1467, 1539,
+        1501, 1502, 1466, 1538,
+        955, 990, 991, 1027,
+        1963, 1998, 1999, 2035
+)
+
+dg_up <- dg_base + 14*36
+
+dg_down <- dg_base - 14*36
+
+
+shower %>% 
+  ggplot() +
+  geom_polygon(color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = . %>% 
+                 filter(group %in% lg_up),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = "black") +
+  geom_polygon(data = . %>% 
+                 filter(group %in% lg_down),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = "black") +
+  geom_polygon(data = . %>% 
+                 filter(group %in% dg_up),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = "black") +
+  geom_polygon(data = . %>% 
+                 filter(group %in% dg_down),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = "black") +
   # geom_text(data = . %>%
   #             group_by(group) %>%
   #             summarize(mid_x = mean(x),
@@ -363,34 +702,102 @@ bathroom %>%
   #           aes(x = mid_x,
   #               y = mid_y,
   #               label = group)) +
-  coord_equal() +
-  theme_void()
-```
-
-
-Now figure out how to put them together ...
-
-```{r, fig.width=10, fig.height=10}
-bathroom %>% 
- mutate(x = x + 36) %>% 
-  ggplot(aes(x = x,
-             y = y)) +
-  geom_polygon(color = "black",
-               aes(group = group,
-                   fill = colors)) +
-  geom_polygon(data = shower,
-               color = "black",
-               aes(fill = colors, 
-                   group = group)) +
-  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61) + 36,
-                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
-               fill = "white") +
   scale_fill_identity() +
   coord_equal() +
   theme_void()
 ```
 
 
+```{r, fig.width=5, fig.height=10}
+shower %>% 
+  ggplot() +
+  geom_polygon(color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = . %>% 
+                 filter(group %in% c(1891, 1854:1855, 1818:1820,
+                                     1781:1784, 1745:1749, 1708:1713, 
+                                     1672:1678, 1635:1642, 1599:1607,
+                                     1562:1571, 1526:1536, 1489:1500,
+                                     1454:1464, 1418:1427, 1383:1391, 
+                                     1347:1354, 1312:1318, 1276:1281, 
+                                     1241:1245, 1205:1208, 1170:1172, 
+                                     1134:1135, 1099,
+                                     1486, 1487, 1451, 1523,
+                                     1502, 1503, 1467, 1539
+                                     
+                                     )),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = "black") +
+  geom_polygon(data = . %>% 
+                 filter(group %in% c(1603, 1566:1567, 1530:1532,
+                                     1493:1496, 1458:1460, 1422:1423,
+                                     1387,
+                                     883, 918, 919, 955
+                                     )),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = "black") +
+  geom_text(data = . %>%
+              group_by(group) %>%
+              summarize(mid_x = mean(x),
+                        mid_y = mean(y)),
+            aes(x = mid_x,
+                y = mid_y,
+                label = group)) +
+  scale_fill_identity() +
+  coord_equal() +
+  theme_void()
+```
+
+```{r, fig.width=6, fig.height=5}
+corner %>% 
+  ggplot() +
+  geom_polygon(color = "black",
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group))  +
+  geom_polygon(data = corner %>% 
+                 filter(group %in% c(247, 329, 292:296, 252:255, 334:337, 171, 417,
+                                     1267:1271, 1309, 1310)),
+               fill = "white",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 filter(group %in% c(251, 333, 1351)),
+               fill = "#365447",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner %>% 
+                 filter(group %in% c(1597, 1637, 1638)),
+               fill = "#8aa48f",
+               color = "black",
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_text(data = . %>%
+              group_by(group) %>%
+              summarize(mid_x = mean(x),
+                        mid_y = mean(y)),
+            aes(x = mid_x,
+                y = mid_y,
+                label = group)) +
+  scale_fill_identity() +
+  coord_equal() +
+  theme_void()
+```
 
 
 
