@@ -1,0 +1,811 @@
+---
+title: "Hex bathroom"
+author: "Lisa Lendway, PhD"
+date: '2023-01-06'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggforce)
+```
+
+Border pattern function.
+
+```{r}
+make_floor_hex <- function(hex_width, dim_width, dim_length, inset_left, inset_right, inset_top, inset_bottom){
+  n_across <- ceiling(dim_width/hex_width)
+  n_down <- ceiling(dim_length/(3*hex_width/sqrt(3)))
+  
+  across_xs <- rep(c(0,0, .5*hex_width, hex_width, hex_width, .5*hex_width, 0), n_across) +
+    rep(0:(n_across-1)*hex_width, each = 7)
+  
+  across_ys <- rep(c(0, hex_width/sqrt(3), 3*hex_width/(2*sqrt(3)), hex_width/sqrt(3), 0,-hex_width/(2*sqrt(3)), 0), n_across)
+  light_green <- c(
+    # vertical diamonds
+    # left column, middle
+    seq((inset_bottom + 1)*n_across + inset_left + 2, 
+        2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
+        2*n_across),
+    # left column, left side
+    seq((inset_bottom + 2)*n_across + inset_left + 1, 
+        2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 1, 
+        4*n_across),
+    # left column, right side
+    seq((inset_bottom + 2)*n_across + inset_left + 2, 
+        2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2, 
+        4*n_across),
+    # right column, middle
+    seq((inset_bottom + 2)*n_across - inset_right - 1, 
+        2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1, 
+        2*n_across),
+    # right column, right side
+    seq((inset_bottom + 3)*n_across - inset_right - 1, 
+        2*n_across*n_down - (inset_top)*n_across - inset_right - 1, 
+        4*n_across),
+    # right column, left side
+    seq((inset_bottom + 3)*n_across - inset_right - 2, 
+        2*n_across*n_down - (inset_top)*n_across - inset_right - 2, 
+        4*n_across),
+    # bottom row, bottom
+    seq((inset_bottom + 1)*n_across + inset_left + 2,
+        (inset_bottom + 2)*n_across - inset_right - 1,
+        3),
+    # bottom row, top
+    seq((inset_bottom + 3)*n_across + inset_left + 2,
+        (inset_bottom + 4)*n_across - inset_right - 1,
+        3),
+    # bottom row, middle
+    seq((inset_bottom + 2)*n_across + inset_left + 1,
+        (inset_bottom + 3)*n_across - inset_right - 2,
+        3),
+    seq((inset_bottom + 2)*n_across + inset_left + 2,
+        (inset_bottom + 3)*n_across - inset_right - 1,
+        3),
+    # top row, top
+    seq(2*n_across*n_down - (inset_top + 2)*n_across + inset_left + 2,
+        2*n_across*n_down - (inset_top + 1)*n_across - inset_right -1,
+        3),
+    # top row, bottom
+    seq(2*n_across*n_down - (inset_top + 4)*n_across + inset_left + 2,
+        2*n_across*n_down - (inset_top + 3)*n_across - inset_right -1,
+        3),
+    # top row, middle
+    seq(2*n_across*n_down - (inset_top + 3)*n_across + inset_left + 1,
+        2*n_across*n_down - (inset_top + 2)*n_across - inset_right - 2,
+        3),
+    seq(2*n_across*n_down - (inset_top + 3)*n_across + inset_left + 2,
+        2*n_across*n_down - (inset_top + 2)*n_across - inset_right - 1,
+        3)
+  )
+  
+  dark_green <- c(
+    # outer every other dot
+    seq((inset_bottom-1)*n_across + inset_left, 
+        inset_bottom*n_across - inset_right + 1, 2),
+    seq(2*n_across*n_down - inset_top*n_across + inset_left, 
+        2*n_across*n_down - (inset_top - 1)*n_across - inset_right + 1, 
+        2),
+    seq((inset_bottom-1)*n_across + inset_left, 
+        2*n_across*n_down - inset_top*n_across + inset_left, 
+        2*n_across),
+    seq(inset_bottom*n_across - inset_right + 1, 
+        2*n_across*n_down - (inset_top - 1)*n_across - inset_right + 1, 
+        2*n_across),
+    # inner every other dot
+    seq((inset_bottom + 5)*n_across + inset_left + 4, 
+        (inset_bottom + 6)*n_across - inset_right - 3, 2),
+    seq(2*n_across*n_down - (inset_top + 6)*n_across + inset_left + 4, 
+        2*n_across*n_down - (inset_top + 5)*n_across - inset_right -3, 
+        2),
+    seq((inset_bottom + 5)*n_across + inset_left + 4, 
+        2*n_across*n_down - (inset_top + 6)*n_across + inset_left + 4, 
+        2*n_across),
+    seq((inset_bottom + 6)*n_across - inset_right - 3, 
+        2*n_across*n_down - (inset_top + 5)*n_across - inset_right -3, 
+        2*n_across) 
+  )
+  
+  hexagon <- tibble(
+    x = rep(c(across_xs, across_xs + .5*hex_width), n_down),
+    y = rep(c(across_ys, across_ys + 3*hex_width/(2*sqrt(3))), n_down) + 
+      rep((0:(n_down - 1))*(3*hex_width/sqrt(3)), each = 2*7*n_across),
+    group = rep(1:(2*n_across*n_down), each = 7),
+    colors = if_else(group %in% light_green,
+                     "#8aa48f",
+                     if_else(group %in% dark_green,
+                             "#365447",
+                             "white"))
+  )
+  list(hexagon = hexagon,
+       n_across = n_across,
+       hex_width = hex_width)
+}
+```
+
+Make star function
+
+```{r}
+make_star <- function(start, length){
+  c(start, 
+    start + 2*length,
+    start + 3*length-1, start + 3*length,
+    (start + 4*length-2):(start + 4*length+2),
+    start + 5*length-1, start + 5*length,
+    start + 6*length,
+    start + 8*length)
+}
+```
+
+
+```{r}
+shower <- make_floor_hex(
+  hex_width = 1 + 3/32,
+  dim_width = 36, 
+  dim_length = 67, 
+  inset_left = 3, 
+  inset_right = 3, 
+  inset_top = 6, 
+  inset_bottom = 5)
+```
+
+```{r, fig.width=5, fig.height=10}
+floor_distance <- shower$n_across*shower$hex_width # should make this a parameter ... but too lazy right now
+
+hex_color <- "gray"
+
+mid_pattern <- 1195
+
+dg_chris <- c(mid_pattern + c(6, 9, 11, 14),
+              mid_pattern + shower$n_across + c(9, 10),
+              mid_pattern - shower$n_across + c(9, 10),
+              mid_pattern + 2*shower$n_across + 10,
+              mid_pattern - 2*shower$n_across + 10,
+              mid_pattern + 4*shower$n_across + 10,
+              mid_pattern - 4*shower$n_across + 10,
+              mid_pattern + 8*shower$n_across + 10,
+              mid_pattern - 8*shower$n_across + 10,
+              mid_pattern + 18*shower$n_across + 10,
+              mid_pattern - 18*shower$n_across + 10
+              )
+
+lg_chris <- c(mid_pattern + c(2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18),
+              mid_pattern + shower$n_across + c(2, 5, 6, 8, 11, 13, 14, 17),
+              mid_pattern - shower$n_across + c(2, 5, 6, 8, 11, 13, 14, 17),
+              mid_pattern + 2*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern - 2*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern + 3*shower$n_across + c(4, 5, 9, 10, 14, 15), 
+              mid_pattern - 3*shower$n_across + c(4, 5, 9, 10, 14, 15),
+              mid_pattern + 4*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern - 4*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern + 5*shower$n_across + c(9, 10),
+              mid_pattern - 5*shower$n_across + c(9, 10),
+              mid_pattern + 6*shower$n_across + 10,
+              mid_pattern - 6*shower$n_across + 10,
+              mid_pattern + 7*shower$n_across + c(9, 10),
+              mid_pattern - 7*shower$n_across + c(9, 10),
+              mid_pattern + 8*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern - 8*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern + 9*shower$n_across + c(7, 9, 10, 12),
+              mid_pattern - 9*shower$n_across + c(7, 9, 10, 12),
+              mid_pattern + 10*shower$n_across + c(5, 10, 15),
+              mid_pattern - 10*shower$n_across + c(5, 10, 15),
+              mid_pattern + 11*shower$n_across + c(4, 5, 14, 15),
+              mid_pattern - 11*shower$n_across + c(4, 5, 14, 15),
+              mid_pattern + 12*shower$n_across + c(5, 10, 15),
+              mid_pattern - 12*shower$n_across + c(5, 10, 15), 
+              mid_pattern + 13*shower$n_across + 8:11,
+              mid_pattern - 13*shower$n_across + 8:11,
+              mid_pattern + 14*shower$n_across + 10,
+              mid_pattern - 14*shower$n_across + 10,
+              mid_pattern + 16*shower$n_across + 10,
+              mid_pattern - 16*shower$n_across + 10,
+              mid_pattern + 17*shower$n_across + c(9, 10),
+              mid_pattern - 17*shower$n_across  + c(9, 10),
+              mid_pattern + 18*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern - 18*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern + 19*shower$n_across + c(9, 10),
+              mid_pattern - 19*shower$n_across + c(9, 10),
+              mid_pattern + 20*shower$n_across + 10,
+              mid_pattern - 20*shower$n_across + 10,
+              mid_pattern + 22*shower$n_across + 10,
+              mid_pattern - 22*shower$n_across + 10)
+shower$hexagon %>% 
+  ggplot(aes(x = x,
+             y = y, 
+             group = group)) +
+  geom_polygon(color = hex_color,
+               aes(fill = colors)) +
+  geom_polygon(data = . %>%
+                 filter(group %in% lg_chris),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = hex_color) +
+  geom_polygon(data = . %>%
+                 filter(group %in% dg_chris),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = hex_color) +
+  scale_fill_identity() +
+  # geom_text(data = . %>%
+  #             group_by(group) %>%
+  #             summarize(mid_x = mean(x),
+  #                       mid_y = mean(y)),
+  #           aes(x = mid_x,
+  #               y = mid_y,
+  #               label = group),
+  #           color = "white") +
+  scale_x_continuous(breaks = seq(0,40,3)) +
+  scale_y_continuous(breaks = seq(0,80,5)) +
+  coord_equal() +
+  # theme_void()
+  theme_minimal()
+```
+
+Main floor
+
+```{r}
+bathroom <- make_floor_hex(
+  hex_width = 1 + 3/32,
+  dim_width = 111, 
+  dim_length = 77.875, 
+  inset_left = 6, 
+  inset_right = 15, 
+  inset_top = 6, 
+  inset_bottom = 5)
+```
+
+Weird corner
+
+```{r}
+corner <- make_floor_hex(
+  hex_width = 1 + 3/32,
+  dim_width = 44,
+  dim_length = 37,
+  inset_left = 1,
+  inset_right = 1,
+  inset_top = 2,
+  inset_bottom = 5
+)
+```
+
+
+
+```{r, fig.width=15, fig.height=12}
+bathroom$hexagon %>% 
+  ggplot(aes(x = x,
+             y = y)) +
+  geom_polygon(color = hex_color,
+               aes(fill = colors, 
+             group = group)) +
+  geom_polygon(data = . %>% filter(group %in% c(
+    make_star(6139                              , bathroom$n_across),
+    make_star(6139 + 19                         , bathroom$n_across),
+    make_star(6139 + 2*19                       , bathroom$n_across),
+    make_star(6139 + 3*19                       , bathroom$n_across),
+    make_star(6139 - 18*bathroom$n_across       , bathroom$n_across),
+    make_star(6139 + 19 - 18*bathroom$n_across  , bathroom$n_across),
+    make_star(6139 + 2*19 - 18*bathroom$n_across, bathroom$n_across),
+    make_star(6139 + 3*19 - 18*bathroom$n_across, bathroom$n_across),
+    make_star(6139 - 36*bathroom$n_across       , bathroom$n_across),
+    make_star(6139 + 19 - 36*bathroom$n_across  , bathroom$n_across)
+  )),
+  color = hex_color,
+  fill = "#8aa48f",
+  aes(x = x,
+      y = y, 
+      group = group)) +
+  geom_polygon(data = . %>% filter(group %in% 
+             c(6139                               + 4*bathroom$n_across, 
+               6139 + 19                          + 4*bathroom$n_across, 
+               6139 + 2*19                        + 4*bathroom$n_across, 
+               6139 + 3*19                        + 4*bathroom$n_across, 
+               6139 - 18*bathroom$n_across        + 4*bathroom$n_across, 
+               6139 + 19 - 18*bathroom$n_across   + 4*bathroom$n_across, 
+               6139 + 2*19 - 18*bathroom$n_across + 4*bathroom$n_across, 
+               6139 + 3*19 - 18*bathroom$n_across + 4*bathroom$n_across, 
+               6139 - 36*bathroom$n_across        + 4*bathroom$n_across, 
+               6139 + 19 - 36*bathroom$n_across   + 4*bathroom$n_across)),
+               color = hex_color,
+               fill = "#365447",
+               aes(x = x,
+                   y = y, 
+                   group = group)) +
+  # geom_text(data = . %>%
+  #             group_by(group) %>%
+  #             summarize(mid_x = mean(x),
+  #                       mid_y = mean(y)),
+  #           aes(x = mid_x,
+  #               y = mid_y,
+  #               label = group),
+  #           color = "black") +
+  geom_polygon(data = tibble(x = c(98.5, 98.5, 102.5, 102.5, 98.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "gray",
+               color = hex_color,
+               alpha = .7) +
+  annotate(geom = "text", x = 100.5, y = 50, label = "KICK SPACE", size = 8, angle = 270) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width),
+               color = hex_color,
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width)  %>% 
+                 filter(group %in% 
+              c(247, 329, 252, 292, 293, 334, 171, 417, 173, 419, 255, 295, 296, 337,
+                1309, 1310, 1267, 1269, 1271, 1185, 1187, 1189, 1145, 1146)),
+               fill = "white",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width)  %>% 
+                 filter(group %in% c(1351, 251, 333)),
+               fill = "#365447",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width)  %>% 
+                 filter(group %in% c(1637, 1638, 1597)),
+               fill = "#8aa48f",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(102.5, 102.5, 111.5, 111.5, 102.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61),
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  scale_fill_identity() +
+  scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,80,5)) +
+  coord_equal() +
+  # theme_void()
+  theme_minimal()
+```
+
+Put it all together
+
+```{r, fig.width=10, fig.height=10}
+floor_distance <- shower$n_across*shower$hex_width # should make this a parameter ... but too lazy right now
+
+hex_color <- "gray"
+
+mid_pattern <- 1195
+
+dg_chris <- c(mid_pattern + c(6, 9, 11, 14),
+              mid_pattern + shower$n_across + c(9, 10),
+              mid_pattern - shower$n_across + c(9, 10),
+              mid_pattern + 2*shower$n_across + 10,
+              mid_pattern - 2*shower$n_across + 10,
+              mid_pattern + 4*shower$n_across + 10,
+              mid_pattern - 4*shower$n_across + 10,
+              mid_pattern + 8*shower$n_across + 10,
+              mid_pattern - 8*shower$n_across + 10,
+              mid_pattern + 18*shower$n_across + 10,
+              mid_pattern - 18*shower$n_across + 10
+              )
+
+lg_chris <- c(mid_pattern + c(2, 3, 5, 7, 8, 10, 12, 13, 15, 17, 18),
+              mid_pattern + shower$n_across + c(2, 5, 6, 8, 11, 13, 14, 17),
+              mid_pattern - shower$n_across + c(2, 5, 6, 8, 11, 13, 14, 17),
+              mid_pattern + 2*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern - 2*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern + 3*shower$n_across + c(4, 5, 9, 10, 14, 15), 
+              mid_pattern - 3*shower$n_across + c(4, 5, 9, 10, 14, 15),
+              mid_pattern + 4*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern - 4*shower$n_across + c(6, 9, 11, 14),
+              mid_pattern + 5*shower$n_across + c(9, 10),
+              mid_pattern - 5*shower$n_across + c(9, 10),
+              mid_pattern + 6*shower$n_across + 10,
+              mid_pattern - 6*shower$n_across + 10,
+              mid_pattern + 7*shower$n_across + c(9, 10),
+              mid_pattern - 7*shower$n_across + c(9, 10),
+              mid_pattern + 8*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern - 8*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern + 9*shower$n_across + c(7, 9, 10, 12),
+              mid_pattern - 9*shower$n_across + c(7, 9, 10, 12),
+              mid_pattern + 10*shower$n_across + c(5, 10, 15),
+              mid_pattern - 10*shower$n_across + c(5, 10, 15),
+              mid_pattern + 11*shower$n_across + c(4, 5, 14, 15),
+              mid_pattern - 11*shower$n_across + c(4, 5, 14, 15),
+              mid_pattern + 12*shower$n_across + c(5, 10, 15),
+              mid_pattern - 12*shower$n_across + c(5, 10, 15), 
+              mid_pattern + 13*shower$n_across + 8:11,
+              mid_pattern - 13*shower$n_across + 8:11,
+              mid_pattern + 14*shower$n_across + 10,
+              mid_pattern - 14*shower$n_across + 10,
+              mid_pattern + 16*shower$n_across + 10,
+              mid_pattern - 16*shower$n_across + 10,
+              mid_pattern + 17*shower$n_across + c(9, 10),
+              mid_pattern - 17*shower$n_across  + c(9, 10),
+              mid_pattern + 18*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern - 18*shower$n_across + c(8, 9, 11, 12),
+              mid_pattern + 19*shower$n_across + c(9, 10),
+              mid_pattern - 19*shower$n_across + c(9, 10),
+              mid_pattern + 20*shower$n_across + 10,
+              mid_pattern - 20*shower$n_across + 10,
+              mid_pattern + 22*shower$n_across + 10,
+              mid_pattern - 22*shower$n_across + 10)
+shower$hexagon %>% 
+  ggplot(aes(x = x,
+             y = y)) +
+  geom_polygon(color = hex_color,
+               aes(fill = colors, 
+             group = group)) +
+  geom_polygon(data = . %>%
+                 filter(group %in% lg_chris),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#8aa48f",
+               color = hex_color) +
+  geom_polygon(data = . %>%
+                 filter(group %in% dg_chris),
+               aes(x = x,
+                   y = y,
+                   group = group),
+               fill = "#365447",
+               color = hex_color) +
+  geom_polygon(data = bathroom$hexagon %>% 
+                 mutate(x = x + floor_distance),
+               color = hex_color,
+               aes(fill = colors, 
+             group = group)) +
+  geom_polygon(data = bathroom$hexagon %>% 
+                 mutate(x = x + floor_distance) %>% 
+                 filter(group %in% c(
+    make_star(6139                              , bathroom$n_across),
+    make_star(6139 + 19                         , bathroom$n_across),
+    make_star(6139 + 2*19                       , bathroom$n_across),
+    make_star(6139 + 3*19                       , bathroom$n_across),
+    make_star(6139 - 18*bathroom$n_across       , bathroom$n_across),
+    make_star(6139 + 19 - 18*bathroom$n_across  , bathroom$n_across),
+    make_star(6139 + 2*19 - 18*bathroom$n_across, bathroom$n_across),
+    make_star(6139 + 3*19 - 18*bathroom$n_across, bathroom$n_across),
+    make_star(6139 - 36*bathroom$n_across       , bathroom$n_across),
+    make_star(6139 + 19 - 36*bathroom$n_across  , bathroom$n_across)
+  )),
+  color = hex_color,
+  fill = "#8aa48f",
+  aes(x = x,
+      y = y, 
+      group = group)) +
+  geom_polygon(data = bathroom$hexagon %>% 
+                 mutate(x = x + floor_distance) %>% 
+                 filter(group %in% 
+             c(6139                               + 4*bathroom$n_across, 
+               6139 + 19                          + 4*bathroom$n_across, 
+               6139 + 2*19                        + 4*bathroom$n_across, 
+               6139 + 3*19                        + 4*bathroom$n_across, 
+               6139 - 18*bathroom$n_across        + 4*bathroom$n_across, 
+               6139 + 19 - 18*bathroom$n_across   + 4*bathroom$n_across, 
+               6139 + 2*19 - 18*bathroom$n_across + 4*bathroom$n_across, 
+               6139 + 3*19 - 18*bathroom$n_across + 4*bathroom$n_across, 
+               6139 - 36*bathroom$n_across        + 4*bathroom$n_across, 
+               6139 + 19 - 36*bathroom$n_across   + 4*bathroom$n_across)),
+               color = hex_color,
+               fill = "#365447",
+               aes(x = x,
+                   y = y, 
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(98.5, 98.5, 102.5, 102.5, 98.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x + floor_distance,
+                   y = y),
+               fill = "gray",
+               color = hex_color,
+               alpha = .7) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width + floor_distance),
+               color = hex_color,
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width + floor_distance)  %>% 
+                 filter(group %in% 
+              c(247, 329, 252, 292, 293, 334, 171, 417, 173, 419, 255, 295, 296, 337,
+                1309, 1310, 1267, 1269, 1271, 1185, 1187, 1189, 1145, 1146)),
+               fill = "white",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width + floor_distance)  %>% 
+                 filter(group %in% c(1351, 251, 333)),
+               fill = "#365447",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width + floor_distance)  %>% 
+                 filter(group %in% c(1637, 1638, 1597)),
+               fill = "#8aa48f",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(102.5, 102.5, 113, 113, 102.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x + 36,
+                   y = y),
+               fill = "white") +
+  geom_polygon(data = tibble(x = c(61, 61, 113, 113, 61),
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               aes(x = x + 36,
+                   y = y),
+               fill = "white") +
+  geom_segment(data = tibble(x = 36, y = 67.25, xend = 36, yend = 77.875),
+               aes(x = x, y = y, xend = xend, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 36, y = 0, xend = 36, yend = 38),
+               aes(x = x, y = y, xend = xend, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 0, y = 77.875, xend = 111, yend = 77.875),
+               aes(x = x + 36, y = y, 
+                   xend = xend + 36, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 61, y = 0, xend = 61, yend = 25 + 5/8),
+               aes(x = x + 36, y = y, 
+                   xend = xend + 36, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 61, y = 25 + 5/8, xend = 61 + 50, yend = 25 + 5/8),
+               aes(x = x + 36, y = y, 
+                   xend = xend + 36, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 0, y = 67.25, xend = 36, yend = 67.25),
+               aes(x = x, y = y, 
+                   xend = xend, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 0, y = 0, xend = 36+61, yend = 0),
+               aes(x = x, y = y, 
+                   xend = xend, yend = yend),
+               size = 2,
+               color = hex_color) +
+  geom_segment(data = tibble(x = 0, y = 0, xend = 0, yend = 67.25),
+               aes(x = x, y = y, 
+                   xend = xend, yend = yend),
+               size = 2,
+               color = hex_color) +
+  scale_fill_identity() +
+  # geom_text(data = . %>%
+  #             group_by(group) %>%
+  #             summarize(mid_x = mean(x),
+  #                       mid_y = mean(y)),
+  #           aes(x = mid_x,
+  #               y = mid_y,
+  #               label = group),
+  #           color = "white") +
+  annotate(geom = "text", x = -1, y = 33, label = '67 1/4"', angle = 90, size = 8) +
+  annotate(geom = "text", x = 31 + floor_distance, y = -1, label = '61"', size = 8) +
+  annotate(geom = "text", x = 50 + floor_distance, y = 80, label = '98 1/2"', size = 8) +
+  annotate(geom = "text", x = 100 + floor_distance, y = 80, label = '4"', size = 8) +
+  annotate(geom = "text", x = 16, y = -1, label = '36"', size = 8) +
+  annotate(geom = "text", x = 62 + floor_distance, y = 15, label = '25 5/8"', size = 8, angle = 90) +
+  annotate(geom = "text", x = 104 + floor_distance, y = 50, label = '52 1/4"', size = 8, angle = 270) +
+  annotate(geom = "text", x = 100.5 + floor_distance, y = 50, label = "KICK SPACE", size = 8, angle = 270) +
+  scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,80,5)) +
+  coord_equal() +
+  theme_void()
+  # theme_minimal()
+```
+
+```{r}
+ggsave("bathroom_floorplan_updated_dims.pdf", width = 24, height = 24, units = "in")
+```
+
+
+## Experimental/ideation
+
+```{r, fig.width=15, fig.height=12}
+bathroom$hexagon %>% 
+  ggplot(aes(x = x,
+             y = y)) +
+  geom_polygon(color = hex_color,
+               aes(fill = colors, 
+             group = group)) +
+  geom_polygon(data = . %>% filter(group %in% c(
+    make_star(5938, bathroom$n_across),
+    make_star(5938 + 14, bathroom$n_across),
+    make_star(5938 + 2*14, bathroom$n_across),
+    make_star(5938 + 3*14, bathroom$n_across),
+    make_star(5938 + 4*14, bathroom$n_across),
+    make_star(5938 - 14*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 14 - 14*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 2*14 - 14*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 3*14 - 14*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 4*14 - 14*bathroom$n_across, bathroom$n_across),
+    make_star(5938 - 28*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 14 - 28*bathroom$n_across, bathroom$n_across),
+    make_star(5938 - 42*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 14 - 42*bathroom$n_across, bathroom$n_across)
+  )),
+  color = hex_color,
+  fill = "#8aa48f",
+  aes(x = x,
+      y = y, 
+      group = group)) +
+  geom_text(data = . %>%
+              group_by(group) %>%
+              summarize(mid_x = mean(x),
+                        mid_y = mean(y)),
+            aes(x = mid_x,
+                y = mid_y,
+                label = group),
+            color = "black") +
+  geom_polygon(data = tibble(x = c(98.5, 98.5, 102.5, 102.5, 98.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "gray",
+               color = hex_color,
+               alpha = .7) +
+  annotate(geom = "text", x = 100.5, y = 50, label = "KICK SPACE", size = 8, angle = 270) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width),
+               color = hex_color,
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(102.5, 102.5, 111.5, 111.5, 102.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61),
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  scale_fill_identity() +
+  scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,80,5)) +
+  coord_equal() +
+  # theme_void()
+  theme_minimal()
+```
+
+```{r, fig.width=7, fig.height=7}
+ggplot(corner$hexagon) +
+  geom_polygon(color = hex_color,
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = .  %>% 
+                 filter(group %in% c(247, 329, 252, 292, 293, 334, 171, 417, 173, 419, 255, 295, 296, 337, 
+  1309, 1310, 1267, 1269, 1271, 1185, 1187, 1189, 1145, 1146)),
+               fill = "white",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = .  %>% 
+                 filter(group %in% c(1351, 251, 333)),
+               fill = "#365447",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_polygon(data = .  %>% 
+                 filter(group %in% c(1637, 1638, 1597)),
+               fill = "#8aa48f",
+               color = hex_color,
+               aes(x = x,
+                   y = y,
+                   group = group)) +
+  geom_text(data = . %>%
+              group_by(group) %>%
+              summarize(mid_x = mean(x),
+                        mid_y = mean(y)),
+            aes(x = mid_x,
+                y = mid_y,
+                label = group),
+            color = "black") +
+  scale_fill_identity() +
+  scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,80,5)) +
+  coord_equal() +
+  # theme_void()
+  theme_minimal()
+```
+
+
+
+```{r, fig.width=15, fig.height=12}
+bathroom$hexagon %>% 
+  ggplot(aes(x = x,
+             y = y)) +
+  geom_polygon(color = hex_color,
+               aes(fill = colors, 
+             group = group)) +
+  geom_polygon(data = . %>% filter(group %in% c(
+    make_star(5938, bathroom$n_across),
+    make_star(5938 + 14, bathroom$n_across),
+    make_star(5938 + 2*14, bathroom$n_across),
+    make_star(5938 + 3*14, bathroom$n_across),
+    make_star(5938 + 4*14, bathroom$n_across),
+    make_star(5938 - 20*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 14 - 20*bathroom$n_across, bathroom$n_across),
+    make_star(5938 - 40*bathroom$n_across, bathroom$n_across),
+    make_star(5938 + 14 - 40*bathroom$n_across, bathroom$n_across)
+  )),
+  color = hex_color,
+  fill = "#8aa48f",
+  aes(x = x,
+      y = y, 
+      group = group)) +
+  geom_text(data = . %>%
+              group_by(group) %>%
+              summarize(mid_x = mean(x),
+                        mid_y = mean(y)),
+            aes(x = mid_x,
+                y = mid_y,
+                label = group),
+            color = "black") +
+  geom_polygon(data = tibble(x = c(98.5, 98.5, 102.5, 102.5, 98.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "gray",
+               color = hex_color,
+               alpha = .7) +
+  annotate(geom = "text", x = 100.5, y = 50, label = "KICK SPACE", size = 8, angle = 270) +
+  geom_polygon(data = corner$hexagon %>% 
+                 mutate(x = x + 47*bathroom$hex_width),
+               color = hex_color,
+               aes(x = x,
+                   y = y, 
+                   fill = colors, 
+                   group = group)) +
+  geom_polygon(data = tibble(x = c(102.5, 102.5, 111.5, 111.5, 102.5),
+                             y = c(25 + 5/8, 78, 78, 25 + 5/8, 25 + 5/8)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  geom_polygon(data = tibble(x = c(61, 61, 111.5, 111.5, 61),
+                             y = c(-.5, 25 + 5/8, 25 + 5/8, -.5, -.5)),
+               aes(x = x,
+                   y = y),
+               fill = "white") +
+  scale_fill_identity() +
+  scale_x_continuous(breaks = seq(0,120,5)) +
+  scale_y_continuous(breaks = seq(0,80,5)) +
+  coord_equal() +
+  # theme_void()
+  theme_minimal()
+```
